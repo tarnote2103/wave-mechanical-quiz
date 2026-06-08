@@ -1,6 +1,6 @@
 // ================= CONFIGURATION =================
 // คุณครูสามารถนำลิงก์ Web App URL ที่ได้จาก Google Apps Script มาวางแทนค่าในปุ่มนี้ได้เลยครับ
-const GOOGLE_SCRIPT_URL = "YOUR_GOOGLE_SCRIPT_URL_HERE";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxJvfkWdf--iUReJD4DqUZz3HWQJ2Wm77Oi53DK0oQM_NEtl9nfbZHvt7AaAc0aH2V7/exec";
 // =================================================
 
 // App State
