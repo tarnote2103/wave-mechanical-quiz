@@ -1,0 +1,7 @@
+# Ignore the original Word document with answers to prevent students from seeing it
+*.docx
+
+# Ignore Python scratch scripts and JSON dumps used for parsing
+*.py
+*.json
+!questions.js

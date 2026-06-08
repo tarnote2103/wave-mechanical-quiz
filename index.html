@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>แบบทดสอบ เรื่อง ปรากฏการณ์ของคลื่นกล</title>
+  <meta name="description" content="แบบทดสอบออนไลน์เพื่อวัดความรู้เรื่อง ปรากฏการณ์ของคลื่นกล พร้อมเฉลยและสถิติการทำข้อสอบแบบเรียลไทม์">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Background Glowing Orbs -->
+  <div class="bg-glow-1"></div>
+  <div class="bg-glow-2"></div>
+
+  <!-- Confetti Canvas for celebration -->
+  <canvas id="confetti" class="confetti-canvas"></canvas>
+
+  <div class="quiz-container">
+    
+    <!-- ================= START SCREEN ================= -->
+    <div id="start-screen" class="screen active">
+      <div class="start-screen-content">
+        <div class="start-illustration">🌊</div>
+        <h1>แบบทดสอบ</h1>
+        <p class="subtitle">เรื่อง ปรากฏการณ์ของคลื่นกล</p>
+        
+        <div class="rules-card">
+          <h3>คำชี้แจงและกติกาก่อนเริ่ม</h3>
+          <ul>
+            <li>แบบทดสอบนี้มีทั้งหมด <strong>40 ข้อ</strong></li>
+            <li>คำถามบางข้อจะมีรูปภาพประกอบคลื่นกล กรุณาสังเกตภาพอย่างละเอียด</li>
+            <li>มีเวลาจำกัดในการทำข้อสอบเฉลี่ย <strong>30 วินาทีต่อข้อ</strong> (มีระบบจับเวลาโดยรวม)</li>
+            <li>คุณสามารถตรวจทานและรีวิวคำตอบทั้งหมดพร้อมเฉลยอย่างละเอียดได้ในหน้าสรุปคะแนน</li>
+          </ul>
+        </div>
+        
+        <button id="start-btn" class="btn btn-primary" aria-label="เริ่มทำแบบทดสอบ">
+          เริ่มทำแบบทดสอบ 🚀
+        </button>
+      </div>
+    </div>
+
+    <!-- ================= QUIZ SCREEN ================= -->
+    <div id="quiz-screen" class="screen">
+      <!-- HUD / Progress and Timer -->
+      <div class="quiz-header">
+        <div class="progress-text">
+          คำถามข้อที่ <span id="current-q-num">1</span> จากทั้งหมด <span id="total-q-num">40</span>
+        </div>
+        <div id="quiz-timer" class="timer">
+          ⏱️ <span id="timer-val">00:00</span>
+        </div>
+      </div>
+      
+      <!-- Progress Bar -->
+      <div class="progress-bar-container">
+        <div id="progress-bar" class="progress-bar"></div>
+      </div>
+      
+      <div id="question-content-area" class="question-fade-container">
+        <!-- Question Container -->
+        <div class="question-container">
+          <div id="question-text" class="question-text">
+            1. การถ่ายทอดพลังงานออกจากแหล่งกำเนิดด้วยการสั่น เรียกว่าอะไร?
+          </div>
+          
+          <!-- Question Image -->
+          <div id="question-image-box" class="question-image-container" style="display: none;">
+            <img id="question-img" src="" alt="ภาพประกอบคำถาม">
+          </div>
+        </div>
+        
+        <!-- Choices Grid -->
+        <div id="options-grid" class="options-grid">
+          <!-- Dynamically rendered options -->
+        </div>
+      </div>
+      
+      <!-- Navigation controls -->
+      <div class="quiz-footer">
+        <button id="next-btn" class="btn btn-primary" style="display: none;">
+          ข้อถัดไป ➔
+        </button>
+      </div>
+    </div>
+
+    <!-- ================= RESULTS SCREEN ================= -->
+    <div id="results-screen" class="screen">
+      <div class="results-screen-content">
+        <h1>สรุปผลคะแนน</h1>
+        <p class="subtitle">แบบทดสอบ เรื่อง ปรากฏการณ์ของคลื่นกล</p>
+        
+        <!-- Circular Progress Chart -->
+        <div class="circular-progress-container">
+          <svg class="circular-progress-svg">
+            <defs>
+              <linearGradient id="progress-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="var(--secondary)" />
+                <stop offset="100%" stop-color="var(--primary)" />
+              </linearGradient>
+            </defs>
+            <circle class="circular-progress-bg" cx="90" cy="90" r="80"></circle>
+            <circle id="circular-progress-val" class="circular-progress-val" cx="90" cy="90" r="80"></circle>
+          </svg>
+          <div id="percentage-text" class="percentage-text">0%</div>
+        </div>
+        
+        <!-- Reward Badge -->
+        <div class="badge-container">
+          <div id="reward-badge" class="badge badge-gold">เหรียญทองเกียรติยศ</div>
+        </div>
+        
+        <!-- Stats Summary Grid -->
+        <div class="score-stats">
+          <div class="stat-card">
+            <span class="stat-label">ตอบถูก</span>
+            <span id="correct-count" class="stat-value success">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">ตอบผิด</span>
+            <span id="incorrect-count" class="stat-value error">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">เวลาที่ใช้</span>
+            <span id="time-spent" class="stat-value info">00:00</span>
+          </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="results-actions">
+          <button id="review-btn" class="btn btn-secondary">
+            👁️ รีวิวคำตอบและเฉลย
+          </button>
+          <button id="restart-btn" class="btn btn-primary">
+            🔄 ทำแบบทดสอบอีกครั้ง
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= REVIEW SCREEN ================= -->
+    <div id="review-screen" class="screen">
+      <div class="review-header">
+        <h2>รีวิวเฉลยคำตอบอย่างละเอียด</h2>
+        <button id="back-to-results-btn" class="btn btn-secondary">
+          ➔ ย้อนกลับหน้าคะแนน
+        </button>
+      </div>
+      
+      <!-- List of all questions with selected answers vs correct answers -->
+      <div id="review-list" class="review-list">
+        <!-- Dynamically rendered review items -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Load Quiz Data and Script -->
+  <script src="questions.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
