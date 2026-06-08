@@ -1,9 +1,19 @@
+// ================= CONFIGURATION =================
+// คุณครูสามารถนำลิงก์ Web App URL ที่ได้จาก Google Apps Script มาวางแทนค่าในปุ่มนี้ได้เลยครับ
+const GOOGLE_SCRIPT_URL = "YOUR_GOOGLE_SCRIPT_URL_HERE";
+// =================================================
+
 // App State
 let currentQuestionIndex = 0;
 let score = 0;
 let userAnswers = []; // stores indices of selected options
 let totalQuestions = 0;
 let questions = [];
+
+// Student details
+let studentName = "";
+let studentClass = "";
+let studentNumber = "";
 
 // Timer state
 let timerInterval = null;
@@ -36,6 +46,11 @@ const optionsGrid = document.getElementById('options-grid');
 const questionImageBox = document.getElementById('question-image-box');
 const questionImg = document.getElementById('question-img');
 
+// Student inputs
+const studentNameInput = document.getElementById('student-name');
+const studentClassInput = document.getElementById('student-class');
+const studentNumberInput = document.getElementById('student-number');
+
 // Results elements
 const circularProgressVal = document.getElementById('circular-progress-val');
 const percentageText = document.getElementById('percentage-text');
@@ -43,6 +58,12 @@ const rewardBadge = document.getElementById('reward-badge');
 const correctCountEl = document.getElementById('correct-count');
 const incorrectCountEl = document.getElementById('incorrect-count');
 const timeSpentEl = document.getElementById('time-spent');
+
+// Sheets Integration elements
+const submissionStatus = document.getElementById('submission-status');
+const statusText = document.getElementById('status-text');
+const backupDownloadBox = document.getElementById('backup-download-box');
+const downloadCertBtn = document.getElementById('download-cert-btn');
 
 // Review elements
 const reviewList = document.getElementById('review-list');
@@ -57,12 +78,31 @@ document.addEventListener('DOMContentLoaded', () => {
     console.error("Quiz questions data not found!");
   }
   
+  // Input Validation
+  function validateInputs() {
+    const nameVal = studentNameInput.value.trim();
+    const classVal = studentClassInput.value.trim();
+    const numVal = studentNumberInput.value.trim();
+    
+    // Enable start button only if all inputs are filled
+    if (nameVal && classVal && numVal) {
+      startBtn.disabled = false;
+    } else {
+      startBtn.disabled = true;
+    }
+  }
+  
+  studentNameInput.addEventListener('input', validateInputs);
+  studentClassInput.addEventListener('input', validateInputs);
+  studentNumberInput.addEventListener('input', validateInputs);
+  
   // Set up Event Listeners
   startBtn.addEventListener('click', startQuiz);
   nextBtn.addEventListener('click', nextQuestion);
   restartBtn.addEventListener('click', restartQuiz);
   reviewBtn.addEventListener('click', showReview);
   backToResultsBtn.addEventListener('click', backToResults);
+  downloadCertBtn.addEventListener('click', downloadScoreCertificate);
 });
 
 // Switch screens helper
@@ -79,9 +119,7 @@ function startTimer() {
   
   timerInterval = setInterval(() => {
     secondsElapsed++;
-    const mins = Math.floor(secondsElapsed / 60);
-    const secs = secondsElapsed % 60;
-    timerValEl.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    timerValEl.textContent = formatTime(secondsElapsed);
     
     // Add warning styling if total time takes too long (e.g. > 15 mins)
     if (secondsElapsed > 900) {
@@ -94,8 +132,19 @@ function stopTimer() {
   clearInterval(timerInterval);
 }
 
+function formatTime(totalSeconds) {
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+
 // Start Quiz logic
 function startQuiz() {
+  // Save student info
+  studentName = studentNameInput.value.trim();
+  studentClass = studentClassInput.value.trim();
+  studentNumber = studentNumberInput.value.trim();
+  
   currentQuestionIndex = 0;
   score = 0;
   userAnswers = [];
@@ -242,10 +291,7 @@ function finishQuiz() {
   // Render text stats
   correctCountEl.textContent = score;
   incorrectCountEl.textContent = incorrectCount;
-  
-  const mins = Math.floor(secondsElapsed / 60);
-  const secs = secondsElapsed % 60;
-  timeSpentEl.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  timeSpentEl.textContent = formatTime(secondsElapsed);
   
   // Trigger circular progress ring animation
   setTimeout(() => {
@@ -268,16 +314,105 @@ function finishQuiz() {
     rewardBadge.textContent = '💡 พยายามอีกนิดนะ';
     rewardBadge.className = 'badge btn-secondary';
   }
+  
+  // Submit score to Google Sheets
+  submitScoreToGoogleSheets();
+}
+
+// Submit score to Google Sheets via Web App Apps Script
+function submitScoreToGoogleSheets() {
+  if (GOOGLE_SCRIPT_URL === "YOUR_GOOGLE_SCRIPT_URL_HERE" || !GOOGLE_SCRIPT_URL) {
+    showSubmissionStatus("warning", "ยังไม่ได้เชื่อมโยง Google Sheets (โปรดดาวน์โหลดหลักฐานส่งครู)");
+    backupDownloadBox.style.display = 'block';
+    return;
+  }
+  
+  showSubmissionStatus("loading", "กำลังบันทึกคะแนนลง Google Sheets...");
+  backupDownloadBox.style.display = 'none';
+  
+  const payload = {
+    name: studentName,
+    className: studentClass,
+    number: studentNumber,
+    score: score,
+    total: totalQuestions,
+    percentage: Math.round((score / totalQuestions) * 100),
+    timeSpent: formatTime(secondsElapsed),
+    timestamp: new Date().toLocaleString('th-TH')
+  };
+  
+  // Use 'no-cors' mode to prevent CORS blocks on redirecting Apps Script URLs
+  fetch(GOOGLE_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  })
+  .then(() => {
+    showSubmissionStatus("success", "บันทึกคะแนนลง Google Sheets เรียบร้อยแล้ว!");
+  })
+  .catch(err => {
+    console.error("Sheets submission failed:", err);
+    showSubmissionStatus("error", "ระบบอัตโนมัติขัดข้อง กรุณาดาวน์โหลดหลักฐานส่งครู");
+    backupDownloadBox.style.display = 'block';
+  });
+}
+
+// Show submission status helpers
+function showSubmissionStatus(type, message) {
+  submissionStatus.style.display = 'flex';
+  const spinner = submissionStatus.querySelector('.status-spinner');
+  
+  if (type === 'success') {
+    spinner.style.display = 'none';
+    statusText.className = 'status-success-text';
+    statusText.innerHTML = `✓ ${message}`;
+  } else if (type === 'error' || type === 'warning') {
+    spinner.style.display = 'none';
+    statusText.className = 'status-error-text';
+    statusText.innerHTML = message;
+  } else {
+    spinner.style.display = 'inline-block';
+    statusText.className = 'status-text';
+    statusText.textContent = message;
+  }
+}
+
+// Download Score CSV backup
+function downloadScoreCertificate() {
+  const filename = `คะแนน_${studentClass}_เลขที่_${studentNumber}_${studentName.replace(/\s+/g, '_')}.csv`;
+  const csvContent = "\ufeff" + // UTF-8 BOM for Thai Excel compatibility
+    "หัวข้อ,รายละเอียด\n" +
+    `ชื่อ-นามสกุล,${studentName}\n` +
+    `ชั้นเรียน,${studentClass}\n` +
+    `เลขที่,${studentNumber}\n` +
+    `วิชา/หัวข้อ,แบบทดสอบ เรื่อง ปรากฏการณ์ของคลื่นกล\n` +
+    `คะแนนที่ได้,${score} / ${totalQuestions}\n` +
+    `คิดเป็นร้อยละ,${Math.round((score / totalQuestions) * 100)}%\n` +
+    `เวลาที่ใช้,${formatTime(secondsElapsed)}\n` +
+    `วันเวลาที่บันทึก,${new Date().toLocaleString('th-TH')}\n`;
+    
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement("a");
+  if (link.download !== undefined) {
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
 }
 
 // Animate Circular Progress SVG
 function animateCircularProgress(percent) {
-  // SVG Circumference is 502.4 (2 * PI * 80)
   const circumference = 2 * Math.PI * 80;
   const offset = circumference - (percent / 100) * circumference;
   circularProgressVal.style.strokeDashoffset = offset;
   
-  // Increment percentage counter text
   let currentVal = 0;
   const counterInterval = setInterval(() => {
     if (currentVal >= percent) {
@@ -365,7 +500,6 @@ function showReview() {
 
 function backToResults() {
   showScreen(resultsScreen);
-  // Re-trigger circular animation
   const percentage = Math.round((score / totalQuestions) * 100);
   animateCircularProgress(percentage);
 }
@@ -380,7 +514,6 @@ function startConfetti() {
   canvas.height = window.innerHeight;
   confettiPieces = [];
   
-  // Create 150 confetti pieces
   for (let i = 0; i < 150; i++) {
     confettiPieces.push({
       x: Math.random() * canvas.width,
@@ -413,7 +546,6 @@ function updateConfetti() {
     p.y += p.speed;
     p.rotation += p.rotationSpeed;
     
-    // Draw piece
     ctx.save();
     ctx.translate(p.x, p.y);
     ctx.rotate((p.rotation * Math.PI) / 180);
@@ -421,7 +553,6 @@ function updateConfetti() {
     ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
     ctx.restore();
     
-    // Reset piece to top if it goes off bottom
     if (p.y > canvas.height) {
       p.y = -20;
       p.x = Math.random() * canvas.width;

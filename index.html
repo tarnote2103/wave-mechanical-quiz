@@ -34,8 +34,27 @@
             <li>คุณสามารถตรวจทานและรีวิวคำตอบทั้งหมดพร้อมเฉลยอย่างละเอียดได้ในหน้าสรุปคะแนน</li>
           </ul>
         </div>
+
+        <!-- Student Registration Form -->
+        <div class="registration-form">
+          <h3>กรอกข้อมูลนักเรียน</h3>
+          <div class="form-group">
+            <label for="student-name">ชื่อ - นามสกุล</label>
+            <input type="text" id="student-name" placeholder="เด็กชายสมชาย ดีใจ" required autocomplete="name">
+          </div>
+          <div class="form-row">
+            <div class="form-group class-group">
+              <label for="student-class">ชั้นเรียน (เช่น ม.5/1)</label>
+              <input type="text" id="student-class" placeholder="ม.5/1" required>
+            </div>
+            <div class="form-group number-group">
+              <label for="student-number">เลขที่</label>
+              <input type="number" id="student-number" min="1" max="100" placeholder="1" required>
+            </div>
+          </div>
+        </div>
         
-        <button id="start-btn" class="btn btn-primary" aria-label="เริ่มทำแบบทดสอบ">
+        <button id="start-btn" class="btn btn-primary" aria-label="เริ่มทำแบบทดสอบ" disabled>
           เริ่มทำแบบทดสอบ 🚀
         </button>
       </div>
@@ -125,6 +144,20 @@
             <span class="stat-label">เวลาที่ใช้</span>
             <span id="time-spent" class="stat-value info">00:00</span>
           </div>
+        </div>
+
+        <!-- Sheets Submission Status -->
+        <div id="submission-status" class="submission-status" style="display: none; margin-bottom: 25px;">
+          <span class="status-spinner"></span>
+          <span id="status-text" class="status-text">กำลังบันทึกคะแนนลง Google Sheets...</span>
+        </div>
+
+        <!-- Backup Download Box -->
+        <div id="backup-download-box" class="backup-download-box" style="display: none; margin-bottom: 25px;">
+          <p class="status-error-text">⚠️ ไม่สามารถบันทึกคะแนนอัตโนมัติได้ กรุณาดาวน์โหลดไฟล์หลักฐานส่งครู</p>
+          <button id="download-cert-btn" class="btn btn-secondary" style="margin-top: 10px; width: auto; padding: 8px 16px; font-size: 0.9rem;">
+            📥 ดาวน์โหลดหลักฐานคะแนน (CSV)
+          </button>
         </div>
         
         <!-- Action Buttons -->
